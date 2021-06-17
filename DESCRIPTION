@@ -1,0 +1,20 @@
+Package: RReport
+Title: A Collection of Functions to Help Generate the Econiq Monthly Report.
+Version: 0.1
+Authors@R: 
+    person(given = "Oisin",
+           family = "Hodgins",
+           role = c("aut", "cre"),
+           email = "oisinhodgins12@gmail.com")
+Description: A collection of functions used to generate the Econiq monthly report. Most of these functions
+    are only designed to be run with the default paramaters, on similarily formatted Econiq datasets.
+    The goal of this package is to generate the monthly report through an rmarkdown file (HTML presentation).
+License: MIT + file LICENSE
+Imports: aod, 
+    formattable, 
+    magrittr, 
+    tidyverse
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1.9000
