@@ -1,0 +1,188 @@
+---
+title: "Monthly Report"
+author: "Oisin Hodgins"
+date: "20/09/2020"
+output: 
+  slidy_presentation:
+    footer: "Econiq Monthly Report"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.height = 5, comment=NA)
+```
+
+# Introduction
+```{r process_data, warning=FALSE, error=FALSE, message=FALSE}
+library(RReport)
+library(ggplot2)
+library(formattable)
+setwd("~/EconiqDemoData")
+read_csv_monthly_report("ClientOnlyCoreDataCleaned.csv")
+process_guided_data()
+process_agent_data_calls()
+process_agent_data_colours()
+process_agent_data_duration()
+```
+
+- Press the "**k**" key now to allow interaction with tables, without changing the slide
+- The "**b**" key will increase font size, while the "**s**" key decreases it
+- The "**c**" key displays the *table of contents*
+
+# General Overview (Calls and their outcomes) [1]
+```{r overview_stats}
+find_total()
+```
+Total Calls made this month: `r nrow(core_data)`
+  
+  `r guided_total` of which were Guided Conversations (`r round((guided_total)/nrow(core_data),3)`%)   
+  `r referral_total` of which were Referrals  (`r round((referral_total)/nrow(core_data),3)`%)    
+  `r sale_total` of which were Sales  (`r round((sale_total)/nrow(core_data),3)`%)   
+  
+Average duration: `r mean(core_data$duration)%/%60` minutes, `r signif(mean(core_data$duration)%%60,2)` seconds
+
+A total of `r nrow(total_customers)` customers were served, with `r sum(core_data$newCustomer)` being new customers.
+
+# General Overview (Call outcome visualised) [2] {.smaller}
+```{r outcome_plot, warning=FALSE, error=FALSE}
+ggplot(core_data, aes(x = reorder(outcome, outcome, function(x)-length(x)))) +
+    geom_histogram(stat = "count", fill = "pink") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    labs(x = "Call Outcome", y = "Number of Calls")
+```
+
+# General Overview (Call duration visualised) [3] {.smaller}
+```{r duration_hist, warning=FALSE, error=FALSE}
+ggplot(core_data, aes(x=duration)) +
+  geom_histogram(binwidth = 5, fill = "#9999CC") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  labs(title = "Histogram of Call Durations", 
+       x = "Call Duration", y = "Number of Calls")
+```
+
+# Agent Performance (Overview of Method) [1]
+
+**How do our agents rank against each other this period?**
+
+- We have ranked agents from best to worst on a number of different criteria, and combined all these metrics to give the overall agent performance.
+  - The following metrics are directly proportional to performance
+    - **Total calls**
+    - The percentage of **Sales**, **Referrals** and **Guided Conversations**  which make up these calls
+    - The **success rate** of an agent's **Guided Conversations**
+    - The average number of **red clicks** an agent made in their calls
+    
+  - The following metrics are inversely proportional to performance
+    - The average handling time (**AHT**) of an agents calls in the **other** category
+  
+  - The following metrics give the best score when they are close to the mean
+    - The average handling time (**AHT**) of an agents calls not in the *other* category
+    - The average number of **blue**, **green** and **purple** clicks in a call (note: these are ranked against the average clicks in a successful call)  
+      
+- These metrics are then standardized and normalized, meaning all values will lie between [0,1] with 0 being the worst recorded value and 1 being the best recorded value. The values are distributed based off the number of standard deviations they lie from the mean.
+
+# Agent Performance (Heat Table) [2] {.smaller} 
+
+```{r heat_table, warning=FALSE,message=FALSE}
+agent_performance_analysis()
+display_agent_performance_table()
+```
+
+# Agent Performance (Agent performance score) [3]
+
+```{r agent_performance_plot}
+ggplot(agent_kpi_analysis, aes(x = reorder(username,-agent_performance), 
+                               y = agent_performance)) +
+  geom_bar(stat = 'identity', fill = '#50B4E9') +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+  labs(title = "Agents ranked by their performance score", 
+       x = "Agent Username", y = "Agent Performance score")
+```
+
+# Agent Performance (Calls) [4]
+
+```{r call_plot}
+ggplot(core_data, aes(x = reorder(username, username, function(x)-length(x)),fill = outcome)) +
+    geom_bar() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Agents Ranked by Total Calls"
+               , x = "Agent Username", y = "Number of Calls")
+```
+
+# Agent Performance (Sales) [5]
+
+```{r sale_plot}
+ggplot(agent_data, aes(x = reorder(username,-sale_percent), y = sale_percent)) +
+    geom_bar(stat = 'identity', fill = '#56B4E9') +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Percentage of Sales", x = "Agent Username", y = "Sales")
+```
+
+# Agent Performance (Referrals) [6]
+
+```{r ref_plot}
+ggplot(agent_data, aes(x = reorder(username,-ref_percent), y = ref_percent)) +
+    geom_bar(stat = 'identity', fill = '#009E73') +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Percentage of Referrals", x = "Agent Username", y = "Referrals")
+```
+
+# Agent Performance (Guided Conversations) [7]
+
+```{r guided_plot}
+ggplot(agent_data, aes(x = reorder(username,-guided_percent), y = guided_percent)) +
+    geom_bar(stat = 'identity', fill = '#CC79A7') +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Percentage of Guided Conversations", x = "Agent Username", y = "Guided Conversations")
+```
+
+
+# Agent Performance (AHT) [8]
+
+```{r AHT_plot}
+ggplot(agent_data, aes(x = reorder(username,-AHT), y = AHT)) +
+    geom_bar(stat = 'identity', fill = '#E69F00') +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Agents ranked by AHT, where outcome is not 'other'", x = "Agent Username", y = "Average Handling Time")
+```
+
+# Agent Performance (AHT, where outcome = other) [9]
+
+```{r AHT_other_plot}
+ggplot(agent_data, aes(x = reorder(username,-AHT_other), y = AHT_other)) +
+    geom_bar(stat = 'identity', fill = '#009E73') +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1)) +
+    labs(title = "Agents ranked by AHT, where the outcome is 'other'", x = "Agent Username", y = "Average Handling Time")
+```
+
+# Guided Conversation Analysis (Overview of Method) [1]
+
+**What metrics best predict if a Guided Conversation will be successful or not?**
+
+- We aim to answer this question through multivariate logistic regression
+  - We will rank the predictors in order of significance, highlighting those which we can conclude are statistically significant
+    - This is done in part through Wald tests and also a Chi-Square test 
+    
+# Guided Conversation Analysis (Agent choice) [2]
+
+```{r chi_test, echo=FALSE, warning=FALSE, error=FALSE}
+agent_guided_success_Chi_Square_test()
+```
+
+# Guided Conversation Analysis (Agent Plot) [3]
+
+```{r chi_plot}
+ggplot(plot_data, aes(x=reorder(username, username, function(x)-length(x)),fill = success)) +
+    geom_bar(position = position_dodge(width=1)) +
+    theme(plot.title = element_text(size=10,face="bold")) +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust=1, size=4)) +
+    theme(legend.title = element_text(size = 8), legend.text = element_text(size=6)) +
+    scale_fill_discrete(name="Success") +
+    labs(title = "Agents vs. Guided Conversations,\n grouped by success"
+         , x = "Agent username", y = "Tally")
+```
+
+# Guided Conversation Analysis (Regression) [4]
+
+```{r guided_reg, warning=FALSE, error=FALSE}
+logit_reg_guided()
+```
+
